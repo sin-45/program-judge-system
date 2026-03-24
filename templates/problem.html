@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ problem.problem_id }} - {{ problem.title }}</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f5f7; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header-actions { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .btn-back { background-color: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .problem-info { margin-bottom: 20px; }
+        .problem-id { background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; }
+        .problem-desc { background: #f8f9fa; padding: 20px; border-left: 5px solid #007bff; margin-bottom: 30px; font-size: 16px; white-space: pre-wrap; line-height: 1.6; }
+        textarea { width: 100%; height: 300px; font-family: 'Consolas', 'Monaco', monospace; font-size: 16px; padding: 15px; box-sizing: border-box; background-color: #272822; color: #f8f8f2; border-radius: 4px; border: none; }
+        .submit-btn { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: bold; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .submit-btn:hover { background-color: #218838; }
+        .result-box { margin-top: 30px; padding: 20px; background-color: #e9ecef; border-radius: 4px; min-height: 100px; }
+        .status-text { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .status-AC { color: #28a745; }
+        .status-WA { color: #dc3545; }
+        pre { background: #333; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <div class="problem-info">
+                <span class="problem-id">{{ problem.problem_id }}</span>
+                <span style="font-size: 24px; font-weight: bold;">{{ problem.title }}</span>
+            </div>
+            <a href="/difficulty/{{ problem.difficulty }}" class="btn-back">← {{ problem.difficulty }}問題一覧に戻る</a>
+        </div>
+        
+        <h3>問題文</h3>
+        <div class="problem-desc">{{ problem.description }}</div>
+        
+        <h3>ソースコード (Python)</h3>
+        <input type="hidden" id="problemId" value="{{ problem.problem_id }}">
+        <textarea id="sourceCode" spellcheck="false" placeholder="ここにPythonコードを書いてください..."># 例: a, b = map(int, input().split()); print(a + b)</textarea>
+        
+        <button class="submit-btn" onclick="submitCode()">提出する (Submit)</button>
+
+        <div class="result-box">
+            <div id="statusResult" class="status-text">判定待ち...</div>
+            <pre id="outputResult">ここにジャッジ結果が表示されます</pre>
+        </div>
+    </div>
+
+    <script>
+        async function submitCode() {
+            const code = document.getElementById('sourceCode').value;
+            const problemId = document.getElementById('problemId').value;
+            const statusBox = document.getElementById('statusResult');
+            const outputBox = document.getElementById('outputResult');
+
+            statusBox.textContent = "ジャッジ中... (WJ)";
+            statusBox.className = "status-text";
+            outputBox.textContent = "";
+
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        language: 'python',
+                        code: code,
+                        problem_id: problemId
+                    })
+                });
+
+                const data = await response.json();
+                statusBox.textContent = data.status;
+                outputBox.textContent = data.output;
+
+                if (data.status.includes('AC')) statusBox.classList.add('status-AC');
+                else statusBox.classList.add('status-WA');
+
+            } catch (error) {
+                statusBox.textContent = "エラー";
+                outputBox.textContent = "サーバーとの通信に失敗しました。";
+            }
+        }
+    </script>
+</body>
+</html>
