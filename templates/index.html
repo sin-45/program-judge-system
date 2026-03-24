@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>難易度選択 - My Online Judge</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f5f7; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .difficulty-btn { display: block; margin: 15px auto; padding: 15px; width: 80%; background-color: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 24px; }
+        .difficulty-btn:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Online Judge</h1>
+        <p>挑戦する問題の難易度を選んでください</p>
+        {% for level in difficulties %}
+            <a href="/difficulty/{{ level }}" class="difficulty-btn">{{ level }} 問題に挑戦</a>
+        {% endfor %}
+    </div>
+</body>
+</html>
