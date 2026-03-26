@@ -53,16 +53,6 @@ def submit_code():
     source_code = data.get("code")
     problem_id = data.get("problem_id")
 
-
-    if language != "python":
-        return jsonify({
-            "status": "Error",
-            "output": "Unsupported language",
-        })
-    
-    with open("main.py", "w", encoding="utf-8") as f:
-        f.write(source_code)
-
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -71,13 +61,42 @@ def submit_code():
     finally:
         conn.close()
 
+
+    if language == "python":
+        with open("main.py", "w", encoding="utf-8") as f:
+            f.write(source_code)
+        exec_command = ["python", "main.py"]
+
+    elif language == "rust":
+        with open("main.rs", "w", encoding="utf-8") as f:
+            f.write(source_code)
+        # Rustコードをコンパイル
+        compile_result = subprocess.run(
+            ["rustc", "main.rs", "-o", "main"],
+            capture_output=True,
+            text=True
+            )
+        
+        if compile_result.returncode != 0:
+            return jsonify({
+                "status": "CE",
+                "output": compile_result.stderr,
+            })
+        exec_command = ["./solution"]
+
+    else:
+        return jsonify({
+            "status": "Error",
+            "output": "Unsupported language"
+        })
+    
     status = "AC"
     output = "Accepted"
 
     for i, tc in enumerate(test_cases):
         try:
             result = subprocess.run(
-                ["python", "main.py"],
+                exec_command,
                 input = tc["input_data"],
                 capture_output = True,
                 text = True,
