@@ -36,6 +36,12 @@
         
         <h3>ソースコード (Python)</h3>
         <input type="hidden" id="problemId" value="{{ problem.problem_id }}">
+        <div style="margin-bottom: 10px;">
+            <select id="languageSelect" style="padding: 8px; font-size: 16px; border-radius: 4px;">
+                <option value="python">Python 3</option>
+                <option value="rust">Rust</option>
+            </select>
+        </div>
         <textarea id="sourceCode" spellcheck="false" placeholder="ここにPythonコードを書いてください..."># 例: a, b = map(int, input().split()); print(a + b)</textarea>
         
         <button class="submit-btn" onclick="submitCode()">提出する (Submit)</button>
@@ -48,6 +54,7 @@
 
     <script>
         async function submitCode() {
+            const lang = document.getElementById('languageSelect').value;
             const code = document.getElementById('sourceCode').value;
             const problemId = document.getElementById('problemId').value;
             const statusBox = document.getElementById('statusResult');
@@ -62,7 +69,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        language: 'python',
+                        language: lang,
                         code: code,
                         problem_id: problemId
                     })
