@@ -65,14 +65,14 @@ def submit_code():
     if language == "python":
         with open("main.py", "w", encoding="utf-8") as f:
             f.write(source_code)
-        exec_command = ["python", "main.py"]
+        exec_command = ["python3", "main.py"]
 
     elif language == "rust":
         with open("main.rs", "w", encoding="utf-8") as f:
             f.write(source_code)
         # Rustコードをコンパイル
         compile_result = subprocess.run(
-            ["rustc", "main.rs", "-o", "main"],
+            ["/root/.cargo/bin/rustc", "main.rs", "-o", "main"],
             capture_output=True,
             text=True
             )
@@ -82,7 +82,7 @@ def submit_code():
                 "status": "CE",
                 "output": compile_result.stderr,
             })
-        exec_command = ["./solution"]
+        exec_command = ["./main"]
 
     else:
         return jsonify({
