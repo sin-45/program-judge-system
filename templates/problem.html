@@ -4,21 +4,35 @@
     <meta charset="UTF-8">
     <title>{{ problem.problem_id }} - {{ problem.title }}</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f5f7; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .header-actions { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        .btn-back { background-color: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; }
-        .problem-info { margin-bottom: 20px; }
-        .problem-id { background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; }
-        .problem-desc { background: #f8f9fa; padding: 20px; border-left: 5px solid #007bff; margin-bottom: 30px; font-size: 16px; white-space: pre-wrap; line-height: 1.6; }
-        textarea { width: 100%; height: 300px; font-family: 'Consolas', 'Monaco', monospace; font-size: 16px; padding: 15px; box-sizing: border-box; background-color: #272822; color: #f8f8f2; border-radius: 4px; border: none; }
-        .submit-btn { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: bold; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f5f7; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* ヘッダー周り */
+        .header-actions { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .btn-back { background-color: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .btn-back:hover { background-color: #5a6268; }
+        .problem-info { display: flex; align-items: center; gap: 15px; }
+        .problem-id { background: #007bff; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 18px; }
+        .problem-title { font-size: 24px; font-weight: bold; margin: 0; }
+
+        /* 問題文・制約・入出力のスタイル */
+        .section-title { font-size: 1.2em; font-weight: bold; margin-top: 30px; margin-bottom: 10px; border-bottom: 2px solid #ddd; padding-bottom: 5px; color: #2c3e50; }
+        .problem-desc { background: #f8f9fa; padding: 20px; border-left: 5px solid #007bff; font-size: 16px; line-height: 1.6; border-radius: 0 4px 4px 0; }
+        .example-box { background: #f8f9fa; border: 1px solid #ced4da; padding: 15px; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; font-size: 16px; white-space: pre-wrap; margin-bottom: 20px; color: #212529; }
+
+        /* エディタ・提出周り */
+        .editor-controls { margin-bottom: 10px; }
+        select { padding: 8px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; outline: none; }
+        textarea { width: 100%; height: 350px; font-family: 'Consolas', 'Monaco', monospace; font-size: 16px; padding: 15px; box-sizing: border-box; background-color: #272822; color: #f8f8f2; border-radius: 4px; border: none; outline: none; resize: vertical; }
+        .submit-btn { margin-top: 15px; padding: 12px 30px; font-size: 18px; font-weight: bold; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s; width: 100%; }
         .submit-btn:hover { background-color: #218838; }
+
+        /* ジャッジ結果表示 */
         .result-box { margin-top: 30px; padding: 20px; background-color: #e9ecef; border-radius: 4px; min-height: 100px; }
         .status-text { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         .status-AC { color: #28a745; }
-        .status-WA { color: #dc3545; }
-        pre { background: #333; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .status-WA, .status-RE, .status-TLE, .status-CE { color: #dc3545; }
+        pre { background: #333; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; }
     </style>
 </head>
 <body>
@@ -26,23 +40,33 @@
         <div class="header-actions">
             <div class="problem-info">
                 <span class="problem-id">{{ problem.problem_id }}</span>
-                <span style="font-size: 24px; font-weight: bold;">{{ problem.title }}</span>
+                <h1 class="problem-title">{{ problem.title }}</h1>
             </div>
-            <a href="/difficulty/{{ problem.difficulty }}" class="btn-back">← {{ problem.difficulty }}問題一覧に戻る</a>
+            <a href="/difficulty/{{ problem.difficulty }}" class="btn-back">← 難易度 {{ problem.difficulty }} 一覧に戻る</a>
         </div>
         
-        <h3>問題文</h3>
-        <div class="problem-desc">{{ problem.description }}</div>
+        <div class="section-title">問題文</div>
+        <div class="problem-desc" style="white-space: pre-wrap;">{{ problem.description }}</div>
         
-        <h3>ソースコード (Python)</h3>
-        <input type="hidden" id="problemId" value="{{ problem.problem_id }}">
-        <div style="margin-bottom: 10px;">
-            <select id="languageSelect" style="padding: 8px; font-size: 16px; border-radius: 4px;">
+        <div class="section-title">制約</div>
+        <div class="problem-desc" style="white-space: pre-wrap;">{{ problem.constraints }}</div>
+        
+        <div class="section-title">入力例 1</div>
+        <div class="example-box">{{ problem.input_example }}</div>
+        
+        <div class="section-title">出力例 1</div>
+        <div class="example-box">{{ problem.output_example }}</div>
+        
+        <div class="section-title">ソースコード提出</div>
+        <div class="editor-controls">
+            <select id="languageSelect">
                 <option value="python">Python 3</option>
                 <option value="rust">Rust</option>
             </select>
         </div>
-        <textarea id="sourceCode" spellcheck="false" placeholder="ここにPythonコードを書いてください..."># 例: a, b = map(int, input().split()); print(a + b)</textarea>
+        
+        <input type="hidden" id="problemId" value="{{ problem.problem_id }}">
+        <textarea id="sourceCode" spellcheck="false" placeholder="ここにコードを書いてください..."></textarea>
         
         <button class="submit-btn" onclick="submitCode()">提出する (Submit)</button>
 
@@ -54,37 +78,54 @@
 
     <script>
         async function submitCode() {
-            const lang = document.getElementById('languageSelect').value;
-            const code = document.getElementById('sourceCode').value;
-            const problemId = document.getElementById('problemId').value;
+            // UIのリセット
             const statusBox = document.getElementById('statusResult');
             const outputBox = document.getElementById('outputResult');
-
             statusBox.textContent = "ジャッジ中... (WJ)";
             statusBox.className = "status-text";
             outputBox.textContent = "";
 
+            // 入力データの取得
+            const lang = document.getElementById('languageSelect').value;
+            const code = document.getElementById('sourceCode').value;
+            const problemId = document.getElementById('problemId').value;
+
+            if (!code.trim()) {
+                statusBox.textContent = "エラー";
+                outputBox.textContent = "ソースコードが入力されていません。";
+                statusBox.classList.add('status-WA');
+                return;
+            }
+
             try {
+                // サーバーへ送信
                 const response = await fetch('/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        language: lang,
-                        code: code,
-                        problem_id: problemId
+                    body: JSON.stringify({ 
+                        language: lang, 
+                        code: code, 
+                        problem_id: problemId 
                     })
                 });
 
                 const data = await response.json();
+                
+                // 結果の反映
                 statusBox.textContent = data.status;
                 outputBox.textContent = data.output;
 
-                if (data.status.includes('AC')) statusBox.classList.add('status-AC');
-                else statusBox.classList.add('status-WA');
+                // ステータスに応じた文字色の変更
+                if (data.status === 'AC') {
+                    statusBox.classList.add('status-AC');
+                } else {
+                    statusBox.classList.add('status-WA');
+                }
 
             } catch (error) {
-                statusBox.textContent = "エラー";
+                statusBox.textContent = "通信エラー";
                 outputBox.textContent = "サーバーとの通信に失敗しました。";
+                statusBox.classList.add('status-WA');
             }
         }
     </script>
