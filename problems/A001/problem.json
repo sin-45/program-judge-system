@@ -1,0 +1,9 @@
+{
+    "problem_id": "A001",
+    "title": "はじめての足し算",
+    "difficulty": "A",
+    "description": "2つの整数 A と B が空白区切りで与えられます。\nA と B の和を出力してください。",
+    "constraints": "- 1 <= A, B <= 100\n- A, B は整数",
+    "input_example": "10 20",
+    "output_example": "30"
+}
