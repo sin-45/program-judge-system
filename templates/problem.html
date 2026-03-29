@@ -72,6 +72,7 @@
 
         <div class="result-box">
             <div id="statusResult" class="status-text">判定待ち...</div>
+            <div id="timeResult" class="time-text">実行時間: <span id="execTime">-</span> ms</div>
             <pre id="outputResult">ここにジャッジ結果が表示されます</pre>
         </div>
     </div>
@@ -81,10 +82,14 @@
             // UIのリセット
             const statusBox = document.getElementById('statusResult');
             const outputBox = document.getElementById('outputResult');
+            const timeBox = document.getElementById('timeResult');
+            const execTimeSpan = document.getElementById('execTime');
+
             statusBox.textContent = "ジャッジ中... (WJ)";
             statusBox.className = "status-text";
             outputBox.textContent = "";
-
+            timeBox.style.display = "none";
+            
             // 入力データの取得
             const lang = document.getElementById('languageSelect').value;
             const code = document.getElementById('sourceCode').value;

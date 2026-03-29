@@ -3,6 +3,8 @@ import glob
 import subprocess
 import pymysql
 import json
+import time
+import tempfile
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
@@ -18,6 +20,9 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
+def get_problem_dir(problem_id):
+    return problem_id[0]
+
 # 1. トップページ：難易度（A〜E）を選ばせる
 @app.route("/")
 def home():
@@ -29,8 +34,9 @@ def home():
 @app.route("/difficulty/<level>")
 def show_difficulty(level):
     problems = []
-    if PROBLEMS_DIR.exists():
-        for p_dir in PROBLEMS_DIR.iterdir():
+    level_dir = PROBLEMS_DIR / level
+    if level_dir.exists():
+        for p_dir in level_dir.iterdir():
             if p_dir.is_dir():
                 json_file = p_dir / "problem.json"
                 if json_file.exists():
@@ -63,7 +69,8 @@ def show_difficulty(level):
 # 3. 提出ページ
 @app.route("/problem/<problem_id>")
 def show_problem(problem_id):
-    json_file = PROBLEMS_DIR / problem_id / "problem.json"
+    p_dir = get_problem_dir(problem_id)
+    json_file = PROBLEMS_DIR / p_dir / problem_id / "problem.json"
     if not json_file.exists():
         return "問題が見つかりません", 404
     try:
@@ -82,14 +89,15 @@ def submit_code():
     source_code = data.get("code")
     problem_id = data.get("problem_id")
 
-    test_case_dir = Path("test_cases") / problem_id
+    p_dir = get_problem_dir(problem_id)
+    test_case_dir = Path("problems") / p_dir / problem_id
     in_dir = test_case_dir / "in"
     out_dir = test_case_dir / "out"
 
     if not (in_dir.exists() and out_dir.exists()):
         return jsonify({
             "status": "Error",
-            "output": "Test cases not found for problem_id: {}".format(problem_id)
+            "output": "Problems not found for problem_id: {}".format(problem_id)
         })
     
     test_cases = []
@@ -102,63 +110,73 @@ def submit_code():
                 "expected_output": out_oath.read_text(encoding="utf-8")
             })
 
-    if language == "python":
-        with open("main.py", "w", encoding="utf-8") as f:
-            f.write(source_code)
-        exec_command = ["python3", "main.py"]
-
-    elif language == "rust":
-        with open("main.rs", "w", encoding="utf-8") as f:
-            f.write(source_code)
-        # Rustコードをコンパイル
-        compile_result = subprocess.run(
-            ["/root/.cargo/bin/rustc", "main.rs", "-o", "main"],
-            capture_output=True,
-            text=True
-            )
-        
-        if compile_result.returncode != 0:
-            return jsonify({
-                "status": "CE",
-                "output": compile_result.stderr,
-            })
-        exec_command = ["./main"]
-
-    else:
-        return jsonify({
-            "status": "Error",
-            "output": "Unsupported language"
-        })
-    
     status = "AC"
     output = "Accepted"
+    max_time = 0.0
 
-    for i, tc in enumerate(test_cases):
-        try:
-            result = subprocess.run(
-                exec_command,
-                input = tc["input_data"],
-                capture_output = True,
-                text = True,
-                timeout = 2.0
-            )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
 
-            if result.returncode == 0:
-                if result.stdout.strip() == tc["expected_output"].strip():
-                    continue
+        if language == "python":
+            code_path = temp_path / "main.py"
+            code_path.write_text(source_code, encoding="utf-8")
+            exec_command = ["python3", "main.py"]
+
+        elif language == "rust":
+            code_path = temp_path / "main.rs"
+            code_path.write_text(source_code, encoding="utf-8")
+            # Rustコードをコンパイル
+            compile_result = subprocess.run(
+                ["/root/.cargo/bin/rustc", "main.rs", "-o", "main"],
+                capture_output=True,
+                text=True
+                )
+            
+            if compile_result.returncode != 0:
+                return jsonify({
+                    "status": "CE",
+                    "output": compile_result.stderr,
+                })
+            exec_command = ["./main"]
+
+        else:
+            return jsonify({
+                "status": "Error",
+                "output": "Unsupported language"
+            })
+
+        for i, tc in enumerate(test_cases):
+            try:
+                start_time = time.perf_counter()
+
+                result = subprocess.run(
+                    exec_command,
+                    input = tc["input_data"],
+                    cwd = temp_path,
+                    capture_output = True,
+                    text = True,
+                    timeout = 2.0
+                )
+                end_time = time.perf_counter()
+                exec_time = int((end_time - start_time) * 1000)
+                max_time = max(max_time, exec_time)
+
+                if result.returncode == 0:
+                    if result.stdout.strip() == tc["expected_output"].strip():
+                        continue
+                    else:
+                        status = "WA"
+                        output = "Not Output"
+                        break
                 else:
-                    status = "WA"
-                    output = "Not Output"
+                    status = "RE"
+                    output = result.stderr
                     break
-            else:
-                status = "RE"
-                output = result.stderr
-                break
 
-        except subprocess.TimeoutExpired:
-            status = "TLE"
-            output = "Time Limit Exceeded"
-            break
+            except subprocess.TimeoutExpired:
+                status = "TLE"
+                output = "Time Limit Exceeded"
+                break
     
     try:
         conn = get_db_connection()
@@ -175,7 +193,8 @@ def submit_code():
     return jsonify({
         "status": status,
         "output": output,
-        "received_language": language
+        "received_language": language,
+        "exec_time_ms": max_time
     })
 
 if __name__ == "__main__":
